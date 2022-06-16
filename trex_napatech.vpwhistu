@@ -290,6 +290,7 @@ trex_napatech.vpj=Debug
             + base
           + i40e
             + base
+          + ionic
           + ixgbe
             + base
           + memif

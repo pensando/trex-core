@@ -11,15 +11,12 @@ import shutil;
 import copy;
 import re
 import uuid
-import subprocess
-import platform
-from waflib import Logs
-from waflib.Configure import conf
-from waflib import Build
-import sys
-import compile_bird
-
 from distutils.version import StrictVersion
+
+from waflib import Build, Logs
+from waflib.Configure import conf
+
+import compile_bird
 
 # use hostname as part of cache filename
 Build.CACHE_SUFFIX = '_%s_cache.py' % platform.node()
@@ -732,6 +729,7 @@ main_src = SrcGroup(dir='src',
              'drivers/trex_driver_base.cpp',
              'drivers/trex_driver_bnxt.cpp',
              'drivers/trex_driver_i40e.cpp',
+             'drivers/trex_driver_ionic.cpp',
              'drivers/trex_driver_igb.cpp',
              'drivers/trex_driver_ixgbe.cpp',
              'drivers/trex_driver_mlx5.cpp',
@@ -1239,8 +1237,18 @@ i40e_dpdk_src = SrcGroup(
         'i40e_tm.c',
         'i40e_vf_representor.c',
         'rte_pmd_i40e.c',
-    ]);
-
+    ])
+ionic_dpdk_src = SrcGroup(
+    dir = 'src/dpdk/drivers/net/ionic',
+    src_list = [
+        'ionic_dev.c',
+        'ionic_ethdev.c',
+        'ionic_lif.c',
+        'ionic_mac_api.c',
+        'ionic_main.c',
+        'ionic_rx_filter.c',
+        'ionic_rxtx.c',
+    ])
 mlx5_x86_64_dpdk_src = SrcGroup(
     dir = 'src/dpdk/drivers/',
     src_list = [
@@ -1384,6 +1392,10 @@ ntacc_dpdk =SrcGroups([
 i40e_dpdk =SrcGroups([
                 i40e_dpdk_src
                 ]);
+
+ionic_dpdk = SrcGroups([
+                ionic_dpdk_src
+                ])
 
 mlx5_x86_64_dpdk =SrcGroups([
                 mlx5_x86_64_dpdk_src
@@ -1557,6 +1569,7 @@ dpdk_includes_path =''' ../src/
                         ../src/dpdk/drivers/net/enic/base/
                         ../src/dpdk/drivers/net/i40e/
                         ../src/dpdk/drivers/net/i40e/base/
+                        ../src/dpdk/drivers/net/ionic/
                         ../src/dpdk/drivers/net/ixgbe/
                         ../src/dpdk/drivers/net/ixgbe/base/
                         ../src/dpdk/drivers/net/mlx4/

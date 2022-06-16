@@ -29,6 +29,7 @@
 #include "trex_driver_ntacc.h"
 #include "trex_driver_vic.h"
 #include "trex_driver_virtual.h"
+#include "trex_driver_ionic.h"
 
 
 
@@ -142,6 +143,7 @@ CTRexExtendedDriverDb::CTRexExtendedDriverDb() {
     register_driver(std::string("net_mlx5"),CTRexExtendedDriverBaseMlnx5G::create);
     register_driver(std::string("net_mlx4"),CTRexExtendedDriverMlnx4::create);
     register_driver(std::string("net_ntacc"), CTRexExtendedDriverBaseNtAcc::create);
+    register_driver(std::string("net_ionic"), CTRexExtendedDriverBaseIonic::create);
 
 
     /* virtual devices */
