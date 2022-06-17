@@ -60,7 +60,7 @@ public:
     }
 
     virtual int configure_rx_filter_rules(CPhyEthIF * _if){
-        return(m_filter_manager.configure_rx_filter_rules(_if->get_repid()));
+        return(1);
     }
 
 private:
