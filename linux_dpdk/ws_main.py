@@ -6,10 +6,13 @@
 
 VERSION='0.0.1'
 APPNAME='cxx_test'
-import os;
-import shutil;
-import copy;
+import copy
+import os
+import platform
 import re
+import shutil
+import subprocess
+import sys
 import uuid
 from distutils.version import StrictVersion
 
@@ -1239,15 +1242,24 @@ i40e_dpdk_src = SrcGroup(
         'rte_pmd_i40e.c',
     ])
 ionic_dpdk_src = SrcGroup(
-    dir = 'src/dpdk/drivers/net/ionic',
+    dir = 'src/dpdk/drivers/',
     src_list = [
-        'ionic_dev.c',
-        'ionic_ethdev.c',
-        'ionic_lif.c',
-        'ionic_mac_api.c',
-        'ionic_main.c',
-        'ionic_rx_filter.c',
-        'ionic_rxtx.c',
+        'common/mlx5/mlx5_common.c',
+        'common/mlx5/mlx5_devx_cmds.c',
+        'common/mlx5/mlx5_glue.c',
+        'common/mlx5/mlx5_nl.c',
+        'net/ionic/ionic_dev.c',
+        'net/ionic/ionic_dev_pci.c',
+        'net/ionic/ionic_dev_vdev.c',
+        'net/ionic/ionic_ethdev.c',
+        'net/ionic/ionic_lif.c',
+        'net/ionic/ionic_mac_api.c',
+        'net/ionic/ionic_main.c',
+        'net/ionic/ionic_mem_bypass.c',
+        'net/ionic/ionic_rx_filter.c',
+        'net/ionic/ionic_rxtx.c',
+        'net/ionic/ionic_rxtx_sg.c',
+        'net/ionic/ionic_rxtx_simple.c',
     ])
 mlx5_x86_64_dpdk_src = SrcGroup(
     dir = 'src/dpdk/drivers/',
