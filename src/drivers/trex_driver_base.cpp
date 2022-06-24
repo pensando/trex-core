@@ -143,7 +143,7 @@ CTRexExtendedDriverDb::CTRexExtendedDriverDb() {
     register_driver(std::string("net_mlx5"),CTRexExtendedDriverBaseMlnx5G::create);
     register_driver(std::string("net_mlx4"),CTRexExtendedDriverMlnx4::create);
     register_driver(std::string("net_ntacc"), CTRexExtendedDriverBaseNtAcc::create);
-    register_driver(std::string("net_ionic"), CTRexExtendedDriverBaseIonic::create);
+    register_driver(std::string("net_ionic_pci"), CTRexExtendedDriverBaseIonic::create);
 
 
     /* virtual devices */

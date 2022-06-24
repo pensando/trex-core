@@ -56,7 +56,7 @@ public:
     virtual CFlowStatParser *get_flow_stat_parser();
 
     virtual int set_rcv_all(CPhyEthIF * _if, bool set_on){
-        return(m_filter_manager.set_rcv_all(_if->get_repid(),set_on));
+        return(0);
     }
 
     virtual int configure_rx_filter_rules(CPhyEthIF * _if){

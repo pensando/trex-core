@@ -1244,10 +1244,8 @@ i40e_dpdk_src = SrcGroup(
 ionic_dpdk_src = SrcGroup(
     dir = 'src/dpdk/drivers/',
     src_list = [
-        'common/mlx5/mlx5_common.c',
-        'common/mlx5/mlx5_devx_cmds.c',
-        'common/mlx5/mlx5_glue.c',
-        'common/mlx5/mlx5_nl.c',
+        'common/ionic/ionic_common.c',
+        'common/ionic/ionic_common_uio.c',
         'net/ionic/ionic_dev.c',
         'net/ionic/ionic_dev_pci.c',
         'net/ionic/ionic_dev_vdev.c',
@@ -1363,7 +1361,8 @@ if march == 'x86_64':
     bp_dpdk = SrcGroups([
                   dpdk_src,
                   i40e_dpdk_src,
-                  dpdk_src_x86_64
+                  dpdk_src_x86_64,
+                  ionic_dpdk_src
                   ]);
 
     # BPF + JIT
@@ -1570,6 +1569,7 @@ dpdk_includes_path =''' ../src/
                         ../src/pal/linux_dpdk/dpdk2002_'''+ march +'''/
                         ../src/dpdk/drivers/
                         ../src/dpdk/drivers/common/mlx5/
+                        ../src/dpdk/drivers/common/ionic/
                         ../src/dpdk/drivers/net/
                         ../src/dpdk/drivers/net/af_packet/
                         ../src/dpdk/drivers/net/tap/
@@ -1933,7 +1933,6 @@ build_types = [
 
 
 def build_prog (bld, build_obj):
-
     #rte_libs =[
     #         'dpdk'];
 

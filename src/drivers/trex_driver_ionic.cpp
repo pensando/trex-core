@@ -23,7 +23,7 @@
 #include "trex_driver_defines.h"
 
 CTRexExtendedDriverBaseIonic::CTRexExtendedDriverBaseIonic() {
-    m_cap = tdCAP_MULTI_QUE | tdCAP_ONE_QUE  | TREX_DRV_CAP_MAC_ADDR_CHG ;
+    m_cap = tdCAP_RSS_DROP_QUE_FILTER | tdCAP_ONE_QUE  | TREX_DRV_CAP_MAC_ADDR_CHG ;
     for ( int i=0; i<TREX_MAX_PORTS; i++ ) {
         m_port_xstats[i] = {0};
     }
