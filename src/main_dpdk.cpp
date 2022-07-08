@@ -5390,6 +5390,8 @@ COLD_FUNC void CPhyEthIF::configure_rss_astf(bool is_client,
         }
     }
     assert(rte_eth_dev_rss_reta_update(m_repid, &reta_conf[0], dev_info.reta_size)==0);
+    struct rte_eth_rss_conf *lp_rss =&g_trex.m_port_cfg.m_port_conf.rx_adv_conf.rss_conf;
+    assert(rte_eth_dev_rss_hash_update(m_repid, lp_rss) == 0);
 
     #ifdef RSS_DEBUG
      rte_eth_dev_rss_reta_query(m_repid, &reta_conf[0], dev_info.reta_size);

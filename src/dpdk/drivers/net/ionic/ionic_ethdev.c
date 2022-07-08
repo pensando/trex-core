@@ -588,7 +588,7 @@ ionic_dev_rss_reta_query(struct rte_eth_dev *eth_dev,
 	struct ionic_lif *lif = IONIC_ETH_DEV_TO_LIF(eth_dev);
 	struct ionic_adapter *adapter = lif->adapter;
 	struct ionic_identity *ident = &adapter->ident;
-	int i, num;
+	int i, j, num;
 	uint16_t tbl_sz = rte_le_to_cpu_16(ident->lif.eth.rss_ind_tbl_sz);
 
 	IONIC_PRINT_CALL();
@@ -608,12 +608,12 @@ ionic_dev_rss_reta_query(struct rte_eth_dev *eth_dev,
 
 	num = reta_size / RTE_RETA_GROUP_SIZE;
 
-	for (i = 0; i < num; i++) {
-		memcpy(reta_conf->reta,
-			&lif->rss_ind_tbl[i * RTE_RETA_GROUP_SIZE],
-			RTE_RETA_GROUP_SIZE);
-		reta_conf++;
-	}
+    for (i = 0; i < num; i++) {
+        for(j=0; j < RTE_RETA_GROUP_SIZE; j++) {
+            reta_conf->reta[j] = lif->rss_ind_tbl[(i*RTE_RETA_GROUP_SIZE)+j];
+        }
+        reta_conf++;
+    }
 
 	return 0;
 }
