@@ -6206,7 +6206,7 @@ COLD_FUNC int  update_dpdk_args(void){
         SET_ARGS(g_loglevel_str);
     }else{
         SET_ARGS("--log-level");
-        snprintf(g_loglevel_str, sizeof(g_loglevel_str), "%d", lpp->getVMode()+1);
+        snprintf(g_loglevel_str, sizeof(g_loglevel_str), ".*,%d", lpp->getVMode()+1);
         SET_ARGS(g_loglevel_str);
     }
 

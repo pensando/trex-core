@@ -23,7 +23,7 @@
 #include "trex_driver_defines.h"
 
 CTRexExtendedDriverBaseIonic::CTRexExtendedDriverBaseIonic() {
-    m_cap = tdCAP_RSS_DROP_QUE_FILTER | tdCAP_ONE_QUE  | TREX_DRV_CAP_MAC_ADDR_CHG ;
+    m_cap = tdCAP_ALL | TREX_DRV_CAP_MAC_ADDR_CHG ;
     for ( int i=0; i<TREX_MAX_PORTS; i++ ) {
         m_port_xstats[i] = {0};
     }
@@ -124,92 +124,20 @@ bool CTRexExtendedDriverBaseIonic::get_extended_stats(CPhyEthIF * _if, CPhyEthIF
     };
 
     uint16_t repid = _if->get_repid();
-    xstats_struct* xstats_struct = &m_port_xstats[repid];
-
-
-
-
-    if ( !xstats_struct->init ) {
-        // total_count = COUNT + per queue stats count + XCOUNT
-        xstats_struct->total_count = rte_eth_xstats_get(repid, NULL, 0);
-        assert(xstats_struct->total_count>=COUNT+XCOUNT);
-        struct rte_eth_xstat_name *xstats_names;
-
-    	xstats_names = (struct rte_eth_xstat_name *)malloc(sizeof(struct rte_eth_xstat_name) * xstats_struct->total_count);
-        assert(xstats_names!= 0);
-        rte_eth_xstats_get_names(repid,xstats_names,xstats_struct->total_count);
-        int i;
-
-        for (i=0; i<xstats_struct->total_count; i++){
-            if (strncmp(xstats_names[i].name,"rx_out_of_buffer",RTE_ETH_XSTATS_NAME_SIZE) == 0) { 
-                xstats_struct->last_offset = xstats_struct->total_count - 1 - i;
-                break;
-            }
-        }
-        free(xstats_names);
-    }
-
-    struct rte_eth_xstat xstats_array[xstats_struct->total_count];
-    struct rte_eth_xstat *xstats = &xstats_array[xstats_struct->total_count - XCOUNT - xstats_struct->last_offset];
-    struct rte_eth_stats *prev_stats = &stats->m_prev_stats;
+    struct rte_eth_stats rte_stats;
 
     /* fetch stats */
-    int ret;
-    ret = rte_eth_xstats_get(repid, xstats_array, xstats_struct->total_count);
-    assert(ret==xstats_struct->total_count);
+    assert(rte_eth_stats_get(repid, &rte_stats) == 0);
 
-    uint32_t opackets = xstats[tx_port_unicast_packets].value +
-                        xstats[tx_port_multicast_packets].value +
-                        xstats[tx_port_broadcast_packets].value;
-    uint32_t ipackets = xstats[rx_port_unicast_packets].value +
-                        xstats[rx_port_multicast_packets].value +
-                        xstats[rx_port_broadcast_packets].value;
-    uint64_t obytes = xstats[tx_port_unicast_bytes].value +
-                      xstats[tx_port_multicast_bytes].value +
-                      xstats[tx_port_broadcast_bytes].value;
-    uint64_t ibytes = xstats[rx_port_unicast_bytes].value +
-                      xstats[rx_port_multicast_bytes].value +
-                      xstats[rx_port_broadcast_bytes].value;
-    uint64_t &imissed = xstats_array[rx_missed_errors].value;
-    uint64_t &rx_nombuf = xstats_array[rx_mbuf_allocation_errors].value;
-    uint64_t ierrors = xstats[rx_wqe_err].value +
-                       xstats[rx_crc_errors_phy].value +
-                       xstats[rx_in_range_len_errors_phy].value +
-                       xstats[rx_symbol_err_phy].value +
-                       xstats[rx_out_of_buffer].value;
-    uint64_t &oerrors = xstats[tx_errors_phy].value;
+    stats->opackets = rte_stats.opackets ;
+    stats->ipackets = rte_stats.ipackets;
 
-    if ( !xstats_struct->init ) {
-        xstats_struct->init = true;
-    } else {
-        // Packet counter on Connect5 is 40 bits, use 32 bit diffs
-        uint32_t packet_diff;
-        packet_diff = opackets - (uint32_t)prev_stats->opackets;
-        stats->opackets += packet_diff;
-        stats->obytes += obytes - prev_stats->obytes +
-                         packet_diff * 4; // add FCS
-
-        packet_diff = ipackets - (uint32_t)prev_stats->ipackets;
-        stats->ipackets += packet_diff;
-        stats->ibytes += ibytes - prev_stats->ibytes +
-                         packet_diff * 4; // add FCS
-
-        stats->ierrors += imissed - prev_stats->imissed +
-                          rx_nombuf - prev_stats->rx_nombuf +
-                          ierrors - prev_stats->ierrors;
-        stats->rx_nombuf += rx_nombuf - prev_stats->rx_nombuf;
-        stats->oerrors += oerrors - prev_stats->oerrors;
-    }
-
-    prev_stats->ipackets  = ipackets;
-    prev_stats->opackets  = opackets;
-    prev_stats->ibytes    = ibytes;
-    prev_stats->obytes    = obytes;
-    prev_stats->imissed   = imissed;
-    prev_stats->rx_nombuf = rx_nombuf;
-    prev_stats->ierrors   = ierrors;
-    prev_stats->oerrors   = oerrors;
-
+    stats->obytes = rte_stats.obytes;
+    stats->ibytes = rte_stats.ibytes;
+    
+    stats->rx_nombuf = rte_stats.rx_nombuf;
+    stats->ierrors = rte_stats.ierrors + rte_stats.imissed + rte_stats.rx_nombuf;
+    stats->oerrors = rte_stats.oerrors;
     return true;
 }
 
