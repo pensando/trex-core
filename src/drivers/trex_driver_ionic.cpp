@@ -149,35 +149,30 @@ bool CTRexExtendedDriverBaseIonic::get_extended_stats(CPhyEthIF * _if, CPhyEthIF
         free(xstats_names);
     }
 
-    struct rte_eth_xstat xstats_array[xstats_struct->total_count];
-    struct rte_eth_xstat *xstats = &xstats_array[xstats_struct->total_count - XCOUNT - xstats_struct->last_offset];
+     struct rte_eth_xstat xstats_array[xstats_struct->total_count];
+    // struct rte_eth_xstat *xstats = &xstats_array[xstats_struct->total_count - XCOUNT - xstats_struct->last_offset];
     struct rte_eth_stats *prev_stats = &stats->m_prev_stats;
+    struct rte_eth_stats rte_stats;
 
     /* fetch stats */
     int ret;
     ret = rte_eth_xstats_get(repid, xstats_array, xstats_struct->total_count);
     assert(ret==xstats_struct->total_count);
 
-    uint32_t opackets = xstats[tx_port_unicast_packets].value +
-                        xstats[tx_port_multicast_packets].value +
-                        xstats[tx_port_broadcast_packets].value;
-    uint32_t ipackets = xstats[rx_port_unicast_packets].value +
-                        xstats[rx_port_multicast_packets].value +
-                        xstats[rx_port_broadcast_packets].value;
-    uint64_t obytes = xstats[tx_port_unicast_bytes].value +
-                      xstats[tx_port_multicast_bytes].value +
-                      xstats[tx_port_broadcast_bytes].value;
-    uint64_t ibytes = xstats[rx_port_unicast_bytes].value +
-                      xstats[rx_port_multicast_bytes].value +
-                      xstats[rx_port_broadcast_bytes].value;
-    uint64_t &imissed = xstats_array[rx_missed_errors].value;
-    uint64_t &rx_nombuf = xstats_array[rx_mbuf_allocation_errors].value;
-    uint64_t ierrors = xstats[rx_wqe_err].value +
-                       xstats[rx_crc_errors_phy].value +
-                       xstats[rx_in_range_len_errors_phy].value +
-                       xstats[rx_symbol_err_phy].value +
-                       xstats[rx_out_of_buffer].value;
-    uint64_t &oerrors = xstats[tx_errors_phy].value;
+    assert(rte_eth_stats_get(repid, &rte_stats) == 0);
+
+    uint32_t opackets = rte_stats.opackets ;
+    uint32_t ipackets = rte_stats.ipackets;
+
+    uint64_t obytes = rte_stats.obytes;
+    uint64_t ibytes = rte_stats.ibytes;
+
+    uint64_t &imissed = rte_stats.imissed;
+    uint64_t &rx_nombuf = rte_stats.rx_nombuf;
+    uint64_t ierrors = rte_stats.ierrors;
+
+    uint64_t &oerrors = rte_stats.oerrors;
+
 
     if ( !xstats_struct->init ) {
         xstats_struct->init = true;
