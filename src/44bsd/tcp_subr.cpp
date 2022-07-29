@@ -624,8 +624,10 @@ static void ctx_timer(void *userdata,
         UNSAFE_CONTAINER_OF_PUSH;
         udp_flow=my_unsafe_container_of(tmr,CUdpFlow,m_keep_alive_timer);
         UNSAFE_CONTAINER_OF_POP;
-        udp_flow->on_tick();
-        ctx->handle_udp_timer(udp_flow);
+        if(tmr->m_root && !tmr->m_root->is_self()) {
+                udp_flow->on_tick();
+                ctx->handle_udp_timer(udp_flow);
+            }
         }
         break;
     case ttUDP_APP:
