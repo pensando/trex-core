@@ -960,13 +960,13 @@ HOT_FUNC bool CFlowTable::rx_handle_packet(CTcpPerThreadCtx * ctx,
                 action,
                 port_id);
 
-    if ( action != tPROCESS ) {
-        rx_non_process_packet(action, ctx, mbuf);
+    if ( is_idle ) {
+        rte_pktmbuf_free(mbuf);
         return false;
     }
 
-    if ( is_idle ) {
-        rte_pktmbuf_free(mbuf);
+    if ( action != tPROCESS ) {
+        rx_non_process_packet(action, ctx, mbuf);
         return false;
     }
 
