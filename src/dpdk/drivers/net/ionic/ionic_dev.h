@@ -134,12 +134,14 @@ struct ionic_queue {
 	uint16_t num_descs;
 	uint16_t num_segs;
 	uint16_t head_idx;
+	uint16_t cmb_head_idx;
 	uint16_t tail_idx;
 	uint16_t size_mask;
 	uint8_t type;
 	uint8_t hw_type;
 	uint8_t cos;
 	void *base;
+	void *cmb_base;
 	void *sg_base;
 	struct ionic_doorbell __iomem *db;
 	void **info;
@@ -151,6 +153,7 @@ struct ionic_queue {
 	uint32_t hw_index;
 	rte_iova_t base_pa;
 	rte_iova_t sg_base_pa;
+	rte_iova_t cmb_base_pa;
 };
 
 struct ionic_cq {
@@ -227,7 +230,8 @@ uint32_t ionic_cq_service(struct ionic_cq *cq, uint32_t work_to_do,
 
 int ionic_q_init(struct ionic_queue *q, uint32_t index, uint16_t num_descs);
 void ionic_q_reset(struct ionic_queue *q);
-void ionic_q_map(struct ionic_queue *q, void *base, rte_iova_t base_pa);
+void ionic_q_map(struct ionic_queue *q, void *base, rte_iova_t base_pa,
+				 void *cmb_base, rte_iova_t cmb_base_pa);
 void ionic_q_sg_map(struct ionic_queue *q, void *base, rte_iova_t base_pa);
 
 static inline uint16_t
@@ -248,7 +252,10 @@ ionic_q_flush(struct ionic_queue *q)
 {
 	uint64_t val = IONIC_DBELL_QID(q->hw_index) | q->head_idx;
 
-#if defined(DPDK_SIM)
+#if defined(IONIC_EMBEDDED)
+	asm volatile("dsb st" : : : "memory");
+	rte_write64_relaxed(rte_cpu_to_le_64(val), q->db);
+#elif defined(DPDK_SIM)
 	dpdk_sim_write_doorbell(q->name, q->hw_type, val);
 #else
 	rte_write64(rte_cpu_to_le_64(val), q->db);

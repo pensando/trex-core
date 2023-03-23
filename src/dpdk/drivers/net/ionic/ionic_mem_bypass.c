@@ -71,6 +71,9 @@ struct bypass_range {
 	struct bypass_pool *pools;
 };
 
+/* Support at most this much bypass memory, taken from *end* of range */
+#define IONIC_MEM_BYPASS_MAX (1ULL << 30) /* 1GB */
+
 static struct capmem_range capmem_ranges[CAPMEM_RANGES_MAX];
 static struct bypass_range bypass_info;
 
@@ -326,6 +329,12 @@ ionic_mem_read_capmem(struct ionic_adapter *adapter, bool do_map)
 		IONIC_PRINT(ERR, "Requested range %u does not exist",
 			adapter->bypass_range_idx);
 		goto out;
+	}
+
+	/* Hack - only use a portion of the bypass region */
+	if (range->len > IONIC_MEM_BYPASS_MAX) {
+		range->start += range->len - IONIC_MEM_BYPASS_MAX;
+		range->len = IONIC_MEM_BYPASS_MAX;
 	}
 
 	map_off = range->start & ~(getpagesize() - 1);

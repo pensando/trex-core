@@ -56,7 +56,8 @@ ionic_tx_flush(struct ionic_tx_qcq *txq)
 	uint32_t cnt = 0;
 #endif
 	struct rte_mbuf *txm;
-	struct ionic_txq_comp *cq_desc, *cq_desc_base = cq->base;
+	struct ionic_txq_comp *cq_desc_base = cq->base;
+	volatile struct ionic_txq_comp *cq_desc;
 	void **info;
 
 	cq_desc = &cq_desc_base[cq->tail_idx];
@@ -194,6 +195,9 @@ ionic_xmit_pkts(void *tx_queue, struct rte_mbuf **tx_pkts,
 #endif
 	struct ionic_tx_qcq *txq = tx_queue;
 	struct ionic_queue *q = &txq->qcq.q;
+#ifdef IONIC_PREFETCH
+	struct ionic_txq_desc *desc_base = q->base;
+#endif
 	struct ionic_tx_stats *stats = &txq->stats;
 	struct rte_mbuf *mbuf;
 	uint32_t bytes_tx = 0;
@@ -202,16 +206,10 @@ ionic_xmit_pkts(void *tx_queue, struct rte_mbuf **tx_pkts,
 	int err;
 
 #ifdef IONIC_PREFETCH
-	struct ionic_txq_desc *desc_base = q->base;
-#ifdef IONIC_EMBEDDED
 	rte_prefetch0(&desc_base[q->head_idx]);
-#else
-	if (!(txq->flags & IONIC_QCQ_F_CMB))
-		rte_prefetch0(&desc_base[q->head_idx]);
-#endif
 	rte_prefetch0(&q->info[q->head_idx]);
 
-	if (tx_pkts) {
+	if (nb_pkts) {
 		rte_mbuf_prefetch_part1(tx_pkts[0]);
 		rte_mbuf_prefetch_part2(tx_pkts[0]);
 	}
@@ -235,12 +233,7 @@ ionic_xmit_pkts(void *tx_queue, struct rte_mbuf **tx_pkts,
 	while (nb_tx < nb_pkts) {
 #ifdef IONIC_PREFETCH
 		uint16_t next_idx = Q_NEXT_TO_POST(q, 1);
-#ifdef IONIC_EMBEDDED
 		rte_prefetch0(&desc_base[next_idx]);
-#else
-		if (!(txq->flags & IONIC_QCQ_F_CMB))
-			rte_prefetch0(&desc_base[next_idx]);
-#endif
 		rte_prefetch0(&q->info[next_idx]);
 
 		if (nb_tx + 1 < nb_pkts) {
@@ -265,8 +258,7 @@ ionic_xmit_pkts(void *tx_queue, struct rte_mbuf **tx_pkts,
 	}
 
 	if (nb_tx > 0) {
-		rte_wmb();
-		ionic_q_flush(q);
+		ionic_txq_flush(q);
 
 		txq->last_wdog_cycles = rte_get_timer_cycles();
 
@@ -309,7 +301,7 @@ ionic_xmit_pkts(void *tx_queue, struct rte_mbuf **tx_pkts,
  */
 static __rte_always_inline void
 ionic_rx_clean_one(struct ionic_rx_qcq *rxq,
-		struct ionic_rxq_comp *cq_desc,
+		volatile struct ionic_rxq_comp *cq_desc,
 		struct ionic_rx_service *rx_svc)
 {
 	struct ionic_queue *q = &rxq->qcq.q;
@@ -452,10 +444,9 @@ ionic_rxq_service(struct ionic_rx_qcq *rxq, uint32_t work_to_do,
 #endif
 	struct ionic_cq *cq = &rxq->qcq.cq;
 	struct ionic_queue *q = &rxq->qcq.q;
-#ifdef IONIC_PREFETCH
 	struct ionic_rxq_desc *q_desc_base = q->base;
-#endif
-	struct ionic_rxq_comp *cq_desc, *cq_desc_base = cq->base;
+	struct ionic_rxq_comp *cq_desc_base = cq->base;
+	volatile struct ionic_rxq_comp *cq_desc;
 	uint32_t work_done = 0;
 	uint64_t then, now, hz, delta;
 	int ret;
@@ -476,12 +467,7 @@ ionic_rxq_service(struct ionic_rx_qcq *rxq, uint32_t work_to_do,
 		/* Prefetch 4 x 16B comp */
 		rte_prefetch0(&cq_desc_base[Q_NEXT_TO_SRVC(cq, 4)]);
 		/* Prefetch 4 x 16B descriptors */
-#ifdef IONIC_EMBEDDED
 		rte_prefetch0(&q_desc_base[Q_NEXT_TO_POST(q, 4)]);
-#else
-		if (!(rxq->flags & IONIC_QCQ_F_CMB))
-			rte_prefetch0(&q_desc_base[Q_NEXT_TO_POST(q, 4)]);
-#endif
 #endif
 
 		/* Clean one descriptor */
@@ -504,7 +490,7 @@ ionic_rxq_service(struct ionic_rx_qcq *rxq, uint32_t work_to_do,
 
 	/* Update the queue indices and ring the doorbell */
 	if (work_done) {
-		ionic_q_flush(q);
+		ionic_rxq_flush(q);
 
 		rxq->last_wdog_cycles = rte_get_timer_cycles();
 		rxq->wdog_ms = IONIC_Q_WDOG_MS;
@@ -586,7 +572,7 @@ ionic_rx_fill(struct ionic_rx_qcq *rxq)
 		q->head_idx = Q_NEXT_TO_POST(q, 1);
 	}
 
-	ionic_q_flush(q);
+	ionic_rxq_flush(q);
 
 	return err;
 }
