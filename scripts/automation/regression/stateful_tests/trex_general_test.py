@@ -634,5 +634,15 @@ class CTRexGeneral_Test(unittest.TestCase):
                 'no_vlan': True,
                 'no_ipv6': True,
             },
+
+            'net_ionic_pci': {
+                'rate_percent': 40,
+                'rate_percent_soft': 0.01 if cls.is_vf_nics else 1,
+                'total_pkts': 1000,
+                'rate_latency': 0.01 if cls.is_vf_nics else 1,
+                'latency_9k_enable': False if cls.is_vf_nics else True,
+                'latency_9k_max_average': 200,
+                'latency_9k_max_latency': 200,
+            },
         }
 
