@@ -233,6 +233,12 @@ ionic_dev_tx_queue_setup(struct rte_eth_dev *eth_dev, uint16_t tx_queue_id,
 		tx_conf->tx_free_thresh ? tx_conf->tx_free_thresh :
 		nb_desc - IONIC_DEF_TXRX_BURST;
 
+	if (tx_conf->cos != 0) {
+		IONIC_PRINT(DEBUG, "Setting TxQ %u to CoS %u",
+			tx_queue_id, tx_conf->cos);
+		txq->qcq.q.cos = tx_conf->cos;
+	}
+
 	eth_dev->data->tx_queues[tx_queue_id] = txq;
 
 	return 0;
@@ -616,6 +622,12 @@ ionic_dev_rx_queue_setup(struct rte_eth_dev *eth_dev,
 	if (rx_conf->rx_deferred_start)
 		rxq->flags |= IONIC_QCQ_F_DEFERRED;
 
+	if (rx_conf->cos != 0) {
+		IONIC_PRINT(DEBUG, "Setting RxQ %u to CoS %u",
+			rx_queue_id, rx_conf->cos);
+		rxq->qcq.q.cos = rx_conf->cos;
+	}
+
 	eth_dev->data->rx_queues[rx_queue_id] = rxq;
 
 #ifdef IONIC_MEM_BYPASS
@@ -862,7 +874,7 @@ ionic_dev_rx_descriptor_status(void *rx_queue, uint16_t offset)
 {
 	struct ionic_rx_qcq *rxq = rx_queue;
 	struct ionic_qcq *qcq = &rxq->qcq;
-	struct ionic_rxq_comp *cq_desc;
+	volatile struct ionic_rxq_comp *cq_desc;
 	uint16_t mask, head, tail, pos;
 	bool done_color;
 
@@ -901,7 +913,7 @@ ionic_dev_tx_descriptor_status(void *tx_queue, uint16_t offset)
 {
 	struct ionic_tx_qcq *txq = tx_queue;
 	struct ionic_qcq *qcq = &txq->qcq;
-	struct ionic_txq_comp *cq_desc;
+	volatile struct ionic_txq_comp *cq_desc;
 	uint16_t mask, head, tail, pos, cq_pos;
 	bool done_color;
 

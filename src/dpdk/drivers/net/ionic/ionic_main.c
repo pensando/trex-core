@@ -223,9 +223,6 @@ ionic_adminq_post(struct ionic_lif *lif, struct ionic_admin_ctx *ctx)
 	q->head_idx = Q_NEXT_TO_POST(q, 1);
 
 	/* Ring doorbell */
-#if !defined(RTE_ARCH_ARM64)
-	rte_wmb();
-#endif
 	ionic_q_flush(q);
 
 err_out:

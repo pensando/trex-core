@@ -300,6 +300,7 @@ struct rte_eth_stats {
 #define ETH_SPEED_NUM_50G      50000 /**<  50 Gbps */
 #define ETH_SPEED_NUM_56G      56000 /**<  56 Gbps */
 #define ETH_SPEED_NUM_100G    100000 /**< 100 Gbps */
+#define ETH_SPEED_NUM_200G    200000 /**< 200 Gbps */
 
 /**
  * A structure used to retrieve link-level information of an Ethernet port.
@@ -852,7 +853,9 @@ struct rte_eth_rxconf {
 	 */
 	uint64_t offloads;
 
-	uint64_t reserved_64s[2]; /**< Reserved for future fields */
+    uint8_t cos;              /**< Hack for Pensando Class of Service */
+    uint8_t reserved_8s[7];
+    uint64_t reserved_64s[1]; /**< Reserved for future fields */
 	void *reserved_ptrs[2];   /**< Reserved for future fields */
 };
 
@@ -873,7 +876,9 @@ struct rte_eth_txconf {
 	 */
 	uint64_t offloads;
 
-	uint64_t reserved_64s[2]; /**< Reserved for future fields */
+    uint8_t cos;              /**< Hack for Pensando Class of Service */
+    uint8_t reserved_8s[7];
+    uint64_t reserved_64s[1]; /**< Reserved for future fields */
 	void *reserved_ptrs[2];   /**< Reserved for future fields */
 };
 

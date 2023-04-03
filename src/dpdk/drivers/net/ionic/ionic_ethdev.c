@@ -298,6 +298,9 @@ ionic_dev_link_update(struct rte_eth_dev *eth_dev,
 		link.link_status = ETH_LINK_UP;
 		link.link_duplex = ETH_LINK_FULL_DUPLEX;
 		switch (adapter->link_speed) {
+		case  1000:
+			link.link_speed = ETH_SPEED_NUM_1G;
+			break;
 		case  10000:
 			link.link_speed = ETH_SPEED_NUM_10G;
 			break;
@@ -312,6 +315,9 @@ ionic_dev_link_update(struct rte_eth_dev *eth_dev,
 			break;
 		case 100000:
 			link.link_speed = ETH_SPEED_NUM_100G;
+			break;
+		case 200000:
+			link.link_speed = ETH_SPEED_NUM_200G;
 			break;
 		default:
 			link.link_speed = ETH_SPEED_NUM_NONE;
@@ -608,12 +614,13 @@ ionic_dev_rss_reta_query(struct rte_eth_dev *eth_dev,
 
 	num = reta_size / RTE_RETA_GROUP_SIZE;
 
-    for (i = 0; i < num; i++) {
-        for(j=0; j < RTE_RETA_GROUP_SIZE; j++) {
-            reta_conf->reta[j] = lif->rss_ind_tbl[(i*RTE_RETA_GROUP_SIZE)+j];
-        }
-        reta_conf++;
-    }
+	for (i = 0; i < num; i++) {
+		for (j = 0; j < RTE_RETA_GROUP_SIZE; j++) {
+			reta_conf->reta[j] =
+				lif->rss_ind_tbl[(i * RTE_RETA_GROUP_SIZE) + j];
+		}
+		reta_conf++;
+	}
 
 	return 0;
 }

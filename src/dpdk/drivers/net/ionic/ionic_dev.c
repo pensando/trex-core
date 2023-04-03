@@ -369,8 +369,7 @@ ionic_q_init(struct ionic_queue *q, uint32_t index, uint16_t num_descs)
 	q->index = index;
 	q->num_descs = num_descs;
 	q->size_mask = num_descs - 1;
-	q->head_idx = 0;
-	q->tail_idx = 0;
+	ionic_q_reset(q);
 
 #ifdef DPDK_SIM
 	struct ionic_qcq *qcq = IONIC_Q_TO_QCQ(q);
@@ -380,10 +379,13 @@ ionic_q_init(struct ionic_queue *q, uint32_t index, uint16_t num_descs)
 }
 
 void
-ionic_q_map(struct ionic_queue *q, void *base, rte_iova_t base_pa)
+ionic_q_map(struct ionic_queue *q, void *base, rte_iova_t base_pa,
+			void *cmb_base, rte_iova_t cmb_base_pa)
 {
 	q->base = base;
 	q->base_pa = base_pa;
+	q->cmb_base = cmb_base;
+	q->cmb_base_pa = cmb_base_pa;
 }
 
 void
@@ -397,5 +399,6 @@ void
 ionic_q_reset(struct ionic_queue *q)
 {
 	q->head_idx = 0;
+	q->cmb_head_idx = 0;
 	q->tail_idx = 0;
 }
