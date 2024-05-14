@@ -743,11 +743,11 @@ class build_option:
 
 build_types = [
                build_option(name = "bp-sim", src = bp, use = [''],debug_mode= DEBUG_, is_pie = False,
-                            flags = ['-Wall', '-Werror', '-Wno-sign-compare', '-Wno-strict-aliasing'],
+                            flags = ['-Wall', '-Wno-sign-compare', '-Wno-strict-aliasing'],
                             rpath = ['so']),
 
                build_option(name = "bp-sim", src = bp, use = [''],debug_mode= RELEASE_, is_pie = False,
-                            flags = ['-Wall', '-Werror', '-Wno-sign-compare', '-Wno-strict-aliasing'],
+                            flags = ['-Wall', '-Wno-sign-compare', '-Wno-strict-aliasing'],
                             rpath = ['so']),
 
               ]

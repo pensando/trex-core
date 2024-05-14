@@ -1021,6 +1021,7 @@ main_src = SrcGroup(dir='src',
              'drivers/trex_driver_base.cpp',
             'drivers/trex_driver_bnxt.cpp',
              'drivers/trex_driver_i40e.cpp',
+             'drivers/trex_driver_ionic.cpp',
              'drivers/trex_driver_igb.cpp',
             'drivers/trex_driver_ixgbe.cpp',
              'drivers/trex_driver_igc.cpp',
@@ -1775,6 +1776,20 @@ i40e_dpdk_src = SrcGroup(
         'i40e_vf_representor.c',
         'rte_pmd_i40e.c',
     ])
+ionic_dpdk_src = SrcGroup(
+    dir = 'src/dpdk/drivers/',
+    src_list = [
+        'net/ionic/ionic_dev.c',
+        'net/ionic/ionic_dev_pci.c',
+        'net/ionic/ionic_ethdev.c',
+        'net/ionic/ionic_lif.c',
+        'net/ionic/ionic_mac_api.c',
+        'net/ionic/ionic_main.c',
+        'net/ionic/ionic_rx_filter.c',
+        'net/ionic/ionic_rxtx.c',
+        'net/ionic/ionic_rxtx_sg.c',
+        'net/ionic/ionic_rxtx_simple.c',
+    ])
 
 mlx5_x86_64_dpdk_src = SrcGroup(
     dir = 'src/dpdk/drivers/',
@@ -1914,6 +1929,10 @@ ntacc_dpdk =SrcGroups([
 
 i40e_dpdk =SrcGroups([
                 i40e_dpdk_src
+                ])
+
+ionic_dpdk = SrcGroups([
+                ionic_dpdk_src
                 ])
 
 mlx5_x86_64_dpdk =SrcGroups([
@@ -2106,6 +2125,7 @@ dpdk_includes_path =''' ../src/
                         ../src/dpdk/drivers/net/enic/base/
                         ../src/dpdk/drivers/net/i40e/
                         ../src/dpdk/drivers/net/i40e/base/
+                        ../src/dpdk/drivers/net/ionic/
                         ../src/dpdk/drivers/net/ixgbe/
                         ../src/dpdk/drivers/net/ixgbe/base/
                         ../src/dpdk/drivers/net/igc/
@@ -2481,7 +2501,6 @@ build_types = [
 
 
 def build_prog (bld, build_obj):
-
     #rte_libs =[
     #         'dpdk']
 
@@ -2513,7 +2532,8 @@ def build_prog (bld, build_obj):
                     dpdk_src,
                     i40e_dpdk_src,
                     dpdk_src_x86_64,
-                    dpdk_src_x86_64_ext
+                    dpdk_src_x86_64_ext,
+                    ionic_dpdk_src
                     ])
         
         if bld.env.TAP:
