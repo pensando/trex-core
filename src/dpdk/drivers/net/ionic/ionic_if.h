@@ -1702,6 +1702,7 @@ enum ionic_rx_filter_match_type {
 	IONIC_RX_FILTER_MATCH_VLAN = 0,
 	IONIC_RX_FILTER_MATCH_MAC,
 	IONIC_RX_FILTER_MATCH_MAC_VLAN,
+	IONIC_RX_FILTER_STEER_ID_TTL = 0x11,
 };
 
 /**
@@ -1736,8 +1737,16 @@ struct ionic_rx_filter_add_cmd {
 			__le16 vlan;
 			u8     addr[6];
 		} mac_vlan;
+		struct {
+			u8     ttl;
+			u8     ttl_mask;
+			__le32 pkt_type;
+			__le32 pkt_type_mask;
+			__le32 id;
+			__le32 id_mask;
+		} id_ttl;
 		u8 rsvd[54];
-	};
+	} __rte_packed;
 };
 
 /**

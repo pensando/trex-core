@@ -244,4 +244,13 @@ void ionic_lif_reset_hw_stats(struct ionic_lif *lif);
 
 int ionic_notifyq_handler(struct ionic_lif *lif, int budget);
 
+int
+ionic_dev_add_id_ttl_filter(uint16_t port_id, uint32_t type, uint32_t type_mask,
+                            uint8_t ttl, uint8_t ttl_mask, uint32_t id,
+                            uint32_t id_mask, int queue);
+
+void
+ionic_dev_remove_id_ttl_filter(uint16_t port_id, uint32_t type, uint32_t type_mask,
+                               uint8_t ttl, uint8_t ttl_mask, uint32_t id,
+                               uint32_t id_mask, int queue);
 #endif /* _IONIC_LIF_H_ */
