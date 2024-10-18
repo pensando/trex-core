@@ -72,6 +72,10 @@ ionic_rx_filter_save(struct ionic_lif *lif, uint32_t flow_id,
 	case IONIC_RX_FILTER_MATCH_MAC:
 		memcpy(&key, f->cmd.mac.addr, sizeof(key));
 		break;
+	case IONIC_RX_FILTER_STEER_ID_TTL:
+        key = rte_le_to_cpu_32(f->cmd.id_ttl.id) << 8;
+        key |= f->cmd.id_ttl.ttl;
+        break;
 	default:
 		return -EINVAL;
 	}
@@ -119,6 +123,31 @@ ionic_rx_filter_by_addr(struct ionic_lif *lif, const uint8_t *addr)
 		if (f->match != IONIC_RX_FILTER_MATCH_MAC)
 			continue;
 		if (memcmp(addr, f->cmd.mac.addr, RTE_ETHER_ADDR_LEN) == 0)
+			return f;
+	}
+
+	return NULL;
+}
+
+struct ionic_rx_filter *
+ionic_rx_filter_by_id_ttl(struct ionic_lif *lif, uint32_t type,
+                          uint32_t type_mask, uint8_t ttl, uint8_t ttl_mask,
+                          uint32_t id, uint32_t id_mask, uint32_t queue)
+{
+	const uint32_t key = ((rte_le_to_cpu_32(id) << 8) | ttl) &
+		IONIC_RX_FILTER_HLISTS_MASK;
+	struct ionic_rx_filter *f;
+
+	LIST_FOREACH(f, &lif->rx_filters.by_hash[key], by_hash) {
+		if (f->match != IONIC_RX_FILTER_STEER_ID_TTL)
+			continue;
+		if ((f->cmd.id_ttl.pkt_type == type) &&
+			(f->cmd.id_ttl.pkt_type_mask == type_mask) &&
+			(f->cmd.id_ttl.ttl == ttl) &&
+			(f->cmd.id_ttl.ttl_mask == ttl_mask) &&
+			(f->cmd.id_ttl.id == id) &&
+			(f->cmd.id_ttl.id_mask == id_mask) &&
+			(f->cmd.qid == queue))
 			return f;
 	}
 

@@ -422,6 +422,93 @@ ionic_dev_vlan_filter_set(struct rte_eth_dev *eth_dev, uint16_t vlan_id,
 	return err;
 }
 
+int
+ionic_dev_add_id_ttl_filter(uint16_t port_id, uint32_t type, uint32_t type_mask,
+                            uint8_t ttl, uint8_t ttl_mask, uint32_t id,
+                            uint32_t id_mask, int queue)
+{
+    struct rte_eth_dev *dev;
+    struct ionic_lif *lif;
+    struct ionic_admin_ctx ctx = {
+        .pending_work = true,
+        .cmd.rx_filter_add = {
+            .opcode = IONIC_CMD_RX_FILTER_ADD,
+            .match = rte_cpu_to_le_16(IONIC_RX_FILTER_STEER_ID_TTL),
+        },
+    };
+    int err;
+
+    RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, -ENODEV);
+
+    dev = &rte_eth_devices[port_id];
+    lif = IONIC_ETH_DEV_TO_LIF(dev);
+
+    IONIC_PRINT_CALL();
+
+    ctx.cmd.rx_filter_add.id_ttl.pkt_type = type;
+    ctx.cmd.rx_filter_add.id_ttl.pkt_type_mask = type_mask;
+    ctx.cmd.rx_filter_add.id_ttl.id = id;
+    ctx.cmd.rx_filter_add.id_ttl.id_mask = id_mask;
+    ctx.cmd.rx_filter_add.id_ttl.ttl = ttl;
+    ctx.cmd.rx_filter_add.id_ttl.ttl_mask = ttl_mask;
+    ctx.cmd.rx_filter_add.qid = queue;
+
+    err = ionic_adminq_post_wait(lif, &ctx);
+    if (err)
+        return err;
+
+    IONIC_PRINT(INFO, "rx_filter add (id %d)",
+        rte_le_to_cpu_32(ctx.comp.rx_filter_add.filter_id));
+
+    return ionic_rx_filter_save(lif, 0, IONIC_RXQ_INDEX_ANY, &ctx);
+}
+
+void
+ionic_dev_remove_id_ttl_filter(uint16_t port_id, uint32_t type,
+                               uint32_t type_mask, uint8_t ttl,
+                               uint8_t ttl_mask, uint32_t id,
+                               uint32_t id_mask, int queue)
+{
+    struct rte_eth_dev *dev;
+    struct ionic_lif *lif;
+    struct ionic_rx_filter *f;
+    int err;
+    struct ionic_admin_ctx ctx = {
+        .pending_work = true,
+        .cmd.rx_filter_del = {
+            .opcode = IONIC_CMD_RX_FILTER_DEL,
+        },
+    };
+
+    RTE_ETH_VALID_PORTID_OR_RET(port_id);
+
+    dev = &rte_eth_devices[port_id];
+    lif = IONIC_ETH_DEV_TO_LIF(dev);
+
+    IONIC_PRINT_CALL();
+
+    rte_spinlock_lock(&lif->rx_filters.lock);
+
+    f = ionic_rx_filter_by_id_ttl(lif, type, type_mask, ttl, ttl_mask, id,
+                                  id_mask, queue);
+    if (!f) {
+        rte_spinlock_unlock(&lif->rx_filters.lock);
+        return;
+    }
+
+    ctx.cmd.rx_filter_del.filter_id = rte_cpu_to_le_32(f->filter_id);
+    ionic_rx_filter_free(f);
+
+    rte_spinlock_unlock(&lif->rx_filters.lock);
+
+    err = ionic_adminq_post_wait(lif, &ctx);
+    if (err)
+        return;
+
+    IONIC_PRINT(INFO, "rx_filter del (id %d)",
+        rte_le_to_cpu_32(ctx.cmd.rx_filter_del.filter_id));
+}
+
 static void
 ionic_lif_rx_mode(struct ionic_lif *lif, uint32_t rx_mode)
 {

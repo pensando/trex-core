@@ -43,5 +43,8 @@ struct ionic_rx_filter *ionic_rx_filter_by_vlan(struct ionic_lif *lif,
 	uint16_t vid);
 struct ionic_rx_filter *ionic_rx_filter_by_addr(struct ionic_lif *lif,
 	const uint8_t *addr);
+struct ionic_rx_filter *ionic_rx_filter_by_id_ttl(struct ionic_lif *lif,
+	uint32_t type, uint32_t type_mask, uint8_t ttl, uint8_t ttl_mask,
+	uint32_t id, uint32_t id_mask, uint32_t queue);
 
 #endif /* _IONIC_RX_FILTER_H_ */

@@ -21,6 +21,9 @@
 
 #include "trex_driver_ionic.h"
 #include "trex_driver_defines.h"
+extern "C" {
+    #include <ionic_lif.h>
+}
 
 CTRexExtendedDriverBaseIonic::CTRexExtendedDriverBaseIonic() {
     m_cap = tdCAP_ALL | TREX_DRV_CAP_MAC_ADDR_CHG ;
@@ -159,3 +162,71 @@ void CTRexExtendedDriverBaseIonic::get_rx_stat_capabilities(uint16_t &flags, uin
     base_ip_id = IP_ID_RESERVE_BASE;
 }
 
+void CTRexExtendedDriverBaseIonic::add_del_rules(enum trex_rte_filter_op op, repid_t  repid, uint32_t type,
+                                                 uint32_t type_mask,uint8_t ttl, uint8_t ttl_mask,
+                                                 uint32_t id, uint32_t id_mask, int queue) {
+
+    if (getenv("RUDRA_HW_OFFLOAD")) {
+        if (op == TREX_RTE_ETH_FILTER_ADD) {
+            ionic_dev_add_id_ttl_filter(repid, type, type_mask, ttl, ttl_mask, id,
+                                        id_mask, queue);
+        } else {
+            ionic_dev_remove_id_ttl_filter(repid, type, type_mask, ttl, ttl_mask,
+                                           id, id_mask, queue);
+        }
+    }
+}
+
+int CTRexExtendedDriverBaseIonic::set_rcv_all(CPhyEthIF * _if, bool set_on) {
+    enum trex_rte_filter_op op = set_on ? TREX_RTE_ETH_FILTER_ADD : TREX_RTE_ETH_FILTER_DELETE;
+    repid_t repid=_if->get_repid();
+
+    if (getenv("RUDRA_HW_OFFLOAD")) {
+        if (set_on) {
+            configure_rx_filter_rules_internal(_if, TREX_RTE_ETH_FILTER_DELETE);
+        }
+        add_del_rules(op, repid, RTE_ETH_FLOW_IPV4, ~0, 0, 0, 0, 0,
+                      MAIN_DPDK_RX_Q);
+        add_del_rules(op, repid, RTE_ETH_FLOW_IPV6, ~0, 0, 0, 0, 0,
+                      MAIN_DPDK_RX_Q);
+        add_del_rules(op, repid, RTE_ETH_FLOW_L2_PAYLOAD, ~0, 0, 0, 0, 0,
+                      MAIN_DPDK_RX_Q);
+        if (!set_on) {
+            configure_rx_filter_rules_internal(_if, TREX_RTE_ETH_FILTER_ADD);
+        }
+    }
+    return (0);
+}
+
+int CTRexExtendedDriverBaseIonic::configure_rx_filter_rules(CPhyEthIF * _if) {
+    return configure_rx_filter_rules_internal(_if, TREX_RTE_ETH_FILTER_ADD);
+}
+
+int CTRexExtendedDriverBaseIonic::configure_rx_filter_rules_internal(CPhyEthIF * _if,
+                                                                     enum trex_rte_filter_op op) {
+    repid_t repid=_if->get_repid();
+
+    if (getenv("RUDRA_HW_OFFLOAD")) {
+        if (get_is_stateless()) {
+            add_del_rules(op, repid, RTE_ETH_FLOW_IPV4, ~0, 0, 0,
+                          FLOW_STAT_PAYLOAD_IP_ID, ~0, MAIN_DPDK_RX_Q);
+            add_del_rules(op, repid, RTE_ETH_FLOW_IPV6, ~0, 0, 0,
+                          FLOW_STAT_PAYLOAD_IP_ID, ~0, MAIN_DPDK_RX_Q);
+            add_del_rules(op, repid, RTE_ETH_FLOW_IPV4, ~0, 0, 0, 0, 0,
+                          MAIN_DPDK_DROP_Q);
+            add_del_rules(op, repid, RTE_ETH_FLOW_IPV6, ~0, 0, 0, 0, 0,
+                          MAIN_DPDK_DROP_Q);
+            add_del_rules(op, repid, RTE_ETH_FLOW_L2_PAYLOAD, ~0, 0, 0, 0, 0,
+                          MAIN_DPDK_DROP_Q);
+        } else {
+            uint16_t hops = get_rx_check_hops();
+            uint8_t ttl_mask = 0xff << rte_fls_u32(hops + 7);
+            uint8_t ttl = TTL_RESERVE_DUPLICATE & ttl_mask;
+            add_del_rules(op, repid, RTE_ETH_FLOW_IPV4, ~0, ttl, ttl_mask, 0, 0,
+                          MAIN_DPDK_RX_Q);
+            add_del_rules(op, repid, RTE_ETH_FLOW_IPV6, ~0, ttl, ttl_mask, 0, 0,
+                          MAIN_DPDK_RX_Q);
+        }
+    }
+    return 0;
+}

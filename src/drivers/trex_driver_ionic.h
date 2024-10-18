@@ -55,13 +55,9 @@ public:
     virtual bool flow_control_disable_supported(){return false;}
     virtual CFlowStatParser *get_flow_stat_parser();
 
-    virtual int set_rcv_all(CPhyEthIF * _if, bool set_on){
-        return(0);
-    }
+    virtual int set_rcv_all(CPhyEthIF * _if, bool set_on);
 
-    virtual int configure_rx_filter_rules(CPhyEthIF * _if){
-        return(1);
-    }
+    virtual int configure_rx_filter_rules(CPhyEthIF * _if);
 
 private:
     CDpdkFilterManager  m_filter_manager;
@@ -72,6 +68,10 @@ private:
         uint16_t last_offset;
     };
     xstats_struct m_port_xstats[TREX_MAX_PORTS];
+    virtual void add_del_rules(enum trex_rte_filter_op op, repid_t  repid, uint32_t type,
+                               uint32_t type_mask, uint8_t ttl, uint8_t ttl_mask,
+                               uint32_t id, uint32_t id_mask, int queue);
+    virtual int configure_rx_filter_rules_internal(CPhyEthIF * _if, enum trex_rte_filter_op op);
 };
 
 
