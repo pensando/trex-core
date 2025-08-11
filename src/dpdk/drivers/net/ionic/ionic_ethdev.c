@@ -300,6 +300,12 @@ ionic_dev_link_update(struct rte_eth_dev *eth_dev,
 		case 100000:
 			link.link_speed = RTE_ETH_SPEED_NUM_100G;
 			break;
+		case 200000:
+			link.link_speed = RTE_ETH_SPEED_NUM_200G;
+			break;
+		case 400000:
+			link.link_speed = RTE_ETH_SPEED_NUM_400G;
+			break;
 		default:
 			link.link_speed = RTE_ETH_SPEED_NUM_NONE;
 			break;
